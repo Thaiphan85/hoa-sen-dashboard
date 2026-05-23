@@ -1,0 +1,656 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Phân Tích Địa Lý – Trà Sữa Hoa Sen | T3/2026</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+:root {
+  --green-deep:#1a6b45; --green-mid:#2d8f5e; --green-light:#4ab580;
+  --gold:#c8972a; --bg:#f2f5f2; --card:#ffffff; --border:#d8e8d8;
+  --text:#1e2d1e; --muted:#6b856b; --shadow:0 2px 12px rgba(26,107,69,0.10);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Segoe UI',Arial,sans-serif;background:var(--bg);color:var(--text);font-size:14px}
+
+.header{background:linear-gradient(135deg,#1a6b45 0%,#2d8f5e 100%);color:#fff;
+  padding:18px 32px;display:flex;align-items:center;justify-content:space-between;
+  box-shadow:0 2px 8px rgba(0,0,0,0.2)}
+.header-left{display:flex;align-items:center;gap:14px}
+.header-logo{width:48px;height:48px;background:rgba(255,255,255,0.15);border-radius:50%;
+  display:flex;align-items:center;justify-content:center;font-size:24px;border:2px solid rgba(255,255,255,0.35)}
+.header h1{font-size:20px;font-weight:700}
+.header .sub{font-size:12px;opacity:0.85;margin-top:2px}
+.back-btn{background:rgba(255,255,255,0.15);border:1px solid rgba(255,255,255,0.35);
+  color:#fff;padding:7px 16px;border-radius:20px;font-size:12px;font-weight:600;cursor:pointer;text-decoration:none}
+.back-btn:hover{background:rgba(255,255,255,0.25)}
+
+.container{max-width:1440px;margin:0 auto;padding:22px 28px}
+
+/* TABS */
+.tabs{display:flex;gap:4px;margin-bottom:22px;border-bottom:2px solid var(--border);padding-bottom:0}
+.tab-btn{padding:9px 20px;border:none;background:none;cursor:pointer;font-size:13px;font-weight:600;
+  color:var(--muted);border-bottom:3px solid transparent;margin-bottom:-2px;transition:all 0.2s}
+.tab-btn.active{color:var(--green-deep);border-bottom-color:var(--green-deep)}
+.tab-btn:hover{color:var(--green-deep)}
+.tab-panel{display:none}.tab-panel.active{display:block}
+
+/* CARDS */
+.card{background:var(--card);border-radius:12px;padding:20px 22px;box-shadow:var(--shadow)}
+.card h2{font-size:15px;font-weight:700;color:var(--green-deep);margin-bottom:14px;
+  border-bottom:2px solid var(--border);padding-bottom:8px}
+.card h3{font-size:13px;font-weight:700;color:var(--green-deep);margin-bottom:10px}
+
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px}
+.g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;margin-bottom:20px}
+.full{margin-bottom:20px}
+
+/* REGION CARDS */
+.region-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:20px}
+.region-card{background:var(--card);border-radius:12px;padding:16px 18px;
+  box-shadow:var(--shadow);border-left:5px solid #ccc;cursor:pointer;transition:transform 0.15s}
+.region-card:hover{transform:translateY(-2px)}
+.region-card .rc-name{font-size:13px;font-weight:700;margin-bottom:6px}
+.region-card .rc-val{font-size:20px;font-weight:800}
+.region-card .rc-sub{font-size:11px;color:var(--muted);margin-top:4px}
+.rc-pct{display:inline-block;padding:2px 7px;border-radius:10px;font-size:11px;
+  font-weight:700;color:#fff;margin-top:6px}
+
+/* CITY TABLE */
+.city-table-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:13px}
+thead th{background:var(--green-deep);color:#fff;padding:10px 12px;text-align:left;
+  white-space:nowrap;cursor:pointer;user-select:none;position:sticky;top:0}
+thead th:hover{background:var(--green-mid)}
+.si{margin-left:4px;opacity:0.7}
+tbody tr{border-bottom:1px solid #eef3ee}
+tbody tr:hover{background:#f5fbf5}
+tbody td{padding:9px 12px;white-space:nowrap}
+.city-dot{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:6px}
+
+/* STORE TILES */
+.city-section{margin-bottom:24px}
+.city-section-header{display:flex;align-items:center;gap:10px;margin-bottom:10px;
+  padding:10px 14px;border-radius:8px;color:#fff;font-weight:700;font-size:14px}
+.store-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:10px}
+.store-tile{background:var(--card);border-radius:8px;padding:12px 14px;
+  box-shadow:0 1px 6px rgba(0,0,0,0.08);border-left:4px solid #ccc}
+.store-tile .st-name{font-size:12px;font-weight:700;color:var(--text);margin-bottom:6px;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.store-tile .st-net{font-size:16px;font-weight:800;color:var(--green-deep)}
+.store-tile .st-sub{font-size:11px;color:var(--muted);margin-top:2px}
+.store-tile .st-bar{height:4px;border-radius:2px;margin-top:6px;background:#e8f5e9}
+.store-tile .st-bar-fill{height:4px;border-radius:2px}
+
+/* RANK */
+.rank1{background:#FFD700;color:#7a5800;font-weight:800;padding:2px 6px;border-radius:4px;font-size:11px}
+.rank2{background:#C0C0C0;color:#555;font-weight:700;padding:2px 6px;border-radius:4px;font-size:11px}
+.rank3{background:#CD7F32;color:#fff;font-weight:700;padding:2px 6px;border-radius:4px;font-size:11px}
+
+/* HEATMAP */
+.heatmap-wrap{overflow-x:auto}
+.heatmap-table{border-collapse:collapse;font-size:11px;width:100%}
+.heatmap-table th{padding:5px 8px;background:var(--green-deep);color:#fff;
+  white-space:nowrap;text-align:center;font-weight:600;min-width:38px}
+.heatmap-table th.store-col{text-align:left;min-width:160px;position:sticky;left:0;z-index:2}
+.heatmap-table td{padding:4px 6px;text-align:center;min-width:38px;border:1px solid #f0f5f0}
+.heatmap-table td.store-name{text-align:left;font-weight:600;white-space:nowrap;
+  padding:5px 10px;position:sticky;left:0;background:var(--card);z-index:1}
+
+/* CHART FILTER */
+.chart-filter{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px}
+.city-toggle{padding:5px 12px;border-radius:20px;border:2px solid #ccc;background:#fff;
+  cursor:pointer;font-size:12px;font-weight:600;transition:all 0.15s;user-select:none}
+.city-toggle.active{color:#fff;border-color:transparent}
+
+/* SCATTER */
+.scatter-legend{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}
+.scatter-legend-item{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--muted)}
+.scatter-legend-dot{width:10px;height:10px;border-radius:50%}
+
+/* STATS ROW */
+.stats-row{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-bottom:20px}
+.stat-mini{background:var(--card);border-radius:10px;padding:14px 16px;
+  box-shadow:var(--shadow);text-align:center}
+.stat-mini .sm-label{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:0.4px}
+.stat-mini .sm-val{font-size:18px;font-weight:800;color:var(--green-deep);margin-top:4px}
+.stat-mini .sm-sub{font-size:11px;color:var(--muted);margin-top:2px}
+
+@media(max-width:900px){
+  .region-grid{grid-template-columns:1fr 1fr}
+  .g2,.g3{grid-template-columns:1fr}
+  .stats-row{grid-template-columns:repeat(2,1fr)}
+}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-left">
+    <div class="header-logo">🗺️</div>
+    <div>
+      <h1>Phân Tích Địa Lý – Trà Sữa Hoa Sen</h1>
+      <div class="sub">Tháng 3/2026 · 11 Tỉnh/TP · 4 Vùng · 41 Cửa hàng</div>
+    </div>
+  </div>
+  <a href="dashboard_hoa_sen_t3_2026.html" class="back-btn">← Dashboard Tổng</a>
+</div>
+
+<div class="container">
+
+  <!-- TABS -->
+  <div class="tabs">
+    <button class="tab-btn active" onclick="showTab('t1',this)">🗺️ Tổng Quan Vùng</button>
+    <button class="tab-btn" onclick="showTab('t2',this)">🏙️ So Sánh Tỉnh/TP</button>
+    <button class="tab-btn" onclick="showTab('t3',this)">📈 Xu Hướng Ngày</button>
+    <button class="tab-btn" onclick="showTab('t4',this)">🔥 Heatmap Cửa Hàng</button>
+    <button class="tab-btn" onclick="showTab('t5',this)">📊 Hiệu Quả & Xếp Hạng</button>
+  </div>
+
+  <!-- TAB 1: REGION OVERVIEW -->
+  <div class="tab-panel active" id="t1">
+    <div class="region-grid" id="region-cards"></div>
+    <div class="g2">
+      <div class="card">
+        <h2>Tỷ Trọng Doanh Thu Theo Vùng</h2>
+        <canvas id="chartRegionDonut" height="280"></canvas>
+      </div>
+      <div class="card">
+        <h2>Doanh Thu & Số Cửa Hàng Theo Vùng</h2>
+        <canvas id="chartRegionBar" height="280"></canvas>
+      </div>
+    </div>
+    <div class="card full">
+      <h2>Phân Bổ Doanh Thu Theo Tỉnh/TP (Xếp Hạng)</h2>
+      <div id="city-rank-bars"></div>
+    </div>
+  </div>
+
+  <!-- TAB 2: CITY COMPARISON -->
+  <div class="tab-panel" id="t2">
+    <div class="stats-row" id="city-stats-row"></div>
+    <div class="card full">
+      <h2>Bảng So Sánh KPI Theo Tỉnh/Thành Phố
+        <span style="float:right;font-size:12px;font-weight:400;color:var(--muted)">Click tiêu đề để sắp xếp</span>
+      </h2>
+      <div class="city-table-wrap">
+        <table id="city-table">
+          <thead><tr>
+            <th onclick="sortCity(0)">Tỉnh/TP<span class="si">↕</span></th>
+            <th onclick="sortCity(1)">Vùng<span class="si">↕</span></th>
+            <th onclick="sortCity(2)">Số CH<span class="si">↕</span></th>
+            <th onclick="sortCity(3)">DT Net<span class="si">↕</span></th>
+            <th onclick="sortCity(4)">Tỷ trọng<span class="si">↕</span></th>
+            <th onclick="sortCity(5)">DT/Cửa hàng<span class="si">↕</span></th>
+            <th onclick="sortCity(6)">Số lượng bán<span class="si">↕</span></th>
+            <th onclick="sortCity(7)">ADTC/CH<span class="si">↕</span></th>
+            <th onclick="sortCity(8)">Avg TA<span class="si">↕</span></th>
+          </tr></thead>
+          <tbody id="city-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+    <div class="card full">
+      <h2>Phân Tích Từng Cửa Hàng Theo Tỉnh/TP</h2>
+      <div id="store-by-city"></div>
+    </div>
+  </div>
+
+  <!-- TAB 3: DAILY TREND BY CITY -->
+  <div class="tab-panel" id="t3">
+    <div class="card full">
+      <h2>Xu Hướng Doanh Thu Hàng Ngày Theo Tỉnh/TP</h2>
+      <div class="chart-filter" id="city-toggles"></div>
+      <canvas id="chartCityTrend" height="320"></canvas>
+    </div>
+    <div class="g2">
+      <div class="card">
+        <h2>Ngày Thường vs Cuối Tuần Theo Tỉnh/TP</h2>
+        <canvas id="chartWkdWke" height="300"></canvas>
+      </div>
+      <div class="card">
+        <h2>Phân Phối Doanh Thu Theo Tuần</h2>
+        <canvas id="chartWeekly" height="300"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <!-- TAB 4: STORE HEATMAP -->
+  <div class="tab-panel" id="t4">
+    <div class="card full">
+      <h2>🔥 Heatmap Doanh Thu Hàng Ngày – Top 15 Cửa Hàng</h2>
+      <div class="heatmap-wrap"><table class="heatmap-table" id="heatmap-table"></table></div>
+      <div style="margin-top:10px;font-size:11px;color:var(--muted)">
+        Màu đậm hơn = doanh thu cao hơn trong ngày đó. Đơn vị: triệu VND.
+      </div>
+    </div>
+    <div class="card full">
+      <h2>Chi Tiết Cửa Hàng Theo Tỉnh/TP</h2>
+      <div id="store-tiles"></div>
+    </div>
+  </div>
+
+  <!-- TAB 5: EFFICIENCY -->
+  <div class="tab-panel" id="t5">
+    <div class="g2">
+      <div class="card">
+        <h2>Scatter: Doanh Thu vs Hiệu Quả (Avg TA)</h2>
+        <canvas id="chartScatter" height="320"></canvas>
+        <div class="scatter-legend" id="scatter-legend"></div>
+      </div>
+      <div class="card">
+        <h2>Doanh Thu / Cửa Hàng Theo Tỉnh/TP</h2>
+        <canvas id="chartPerStore" height="320"></canvas>
+      </div>
+    </div>
+    <div class="card full">
+      <h2>Xếp Hạng Tổng Hợp Tỉnh/TP (Radar)</h2>
+      <canvas id="chartRadar" height="380"></canvas>
+    </div>
+  </div>
+
+</div>
+
+<script>
+const GEO = {"cities": [{"city": "Hà Nội", "region": "Đồng bằng sông Hồng", "net": 7764364889.0, "sold": 781290.0, "stores": 22, "store_list": [{"store": "BLP Trà Sữa Hoa Sen - Bạch Mai", "net": 713474822.0, "sold": 81833.0, "avg_ta": 8719, "adtc": 2639.8}, {"store": "BLP Trà Sữa Hoa Sen - Đào Tấn", "net": 574887927.0, "sold": 66445.0, "avg_ta": 8652, "adtc": 2143.4}, {"store": "BLP Trà Sữa Hoa Sen _ Đội Cấn", "net": 361212215.0, "sold": 38918.0, "avg_ta": 9281, "adtc": 1255.4}, {"store": "BLP Trà Sữa Hoa Sen _ Giảng Võ", "net": 426236849.0, "sold": 48478.0, "avg_ta": 8792, "adtc": 1563.8}, {"store": "BLP Trà Sữa Hoa Sen - Hàm Nghi", "net": 220437466.0, "sold": 20487.0, "avg_ta": 10760, "adtc": 660.9}, {"store": "BLP Trà Sữa Hoa Sen - Hoàng Văn Thái", "net": 445477787.0, "sold": 49216.0, "avg_ta": 9051, "adtc": 1587.6}, {"store": "BLP Trà Sữa Hoa Sen - Hồ Tùng Mậu", "net": 471718290.0, "sold": 43985.0, "avg_ta": 10725, "adtc": 1418.9}, {"store": "Trà Sữa Hoa Sen - Chương Mỹ", "net": 90172541.0, "sold": 4047.0, "avg_ta": 22281, "adtc": 130.5}, {"store": "Trà Sữa Hoa Sen _Hàng Gà", "net": 84989079.0, "sold": 7163.0, "avg_ta": 11865, "adtc": 231.1}, {"store": "Trà Sữa Hoa Sen - Hoài Đức", "net": 334655036.0, "sold": 27213.0, "avg_ta": 12298, "adtc": 877.8}, {"store": "Trà Sữa Hoa Sen - Kpark", "net": 559062744.0, "sold": 62194.0, "avg_ta": 8989, "adtc": 2006.3}, {"store": "Trà Sữa Hoa Sen - Ngô Gia Tự", "net": 351595178.0, "sold": 34427.0, "avg_ta": 10213, "adtc": 1110.5}, {"store": "Trà Sữa Hoa Sen - Nguyễn An Ninh", "net": 251242018.0, "sold": 25174.0, "avg_ta": 9980, "adtc": 812.1}, {"store": "Trà Sữa Hoa Sen - Nguyễn Trãi", "net": 622896074.0, "sold": 72735.0, "avg_ta": 8564, "adtc": 2346.3}, {"store": "Trà Sữa Hoa Sen - S1.10 Vinhomes Ocean Park", "net": 195353451.0, "sold": 18331.0, "avg_ta": 10657, "adtc": 591.3}, {"store": "Trà Sữa Hoa Sen - Sài Đồng", "net": 165530101.0, "sold": 16611.0, "avg_ta": 9965, "adtc": 535.8}, {"store": "Trà Sữa Hoa Sen - Tây Mỗ", "net": 504999786.0, "sold": 41312.0, "avg_ta": 12224, "adtc": 1332.6}, {"store": "Trà Sữa Hoa Sen - Thành Lợi", "net": 123819479.0, "sold": 5901.0, "avg_ta": 20983, "adtc": 190.4}, {"store": "Trà Sữa Hoa Sen - Thanh Niên", "net": 476299843.0, "sold": 50877.0, "avg_ta": 9362, "adtc": 1641.2}, {"store": "Trà Sữa Hoa Sen - Trâu Quỳ", "net": 174477815.0, "sold": 16582.0, "avg_ta": 10522, "adtc": 534.9}, {"store": "Trà Sữa Hoa Sen - Văn Quán", "net": 390511231.0, "sold": 27288.0, "avg_ta": 14311, "adtc": 880.3}, {"store": "Trà Sữa Hoa Sen - Vĩnh Hưng", "net": 225315157.0, "sold": 22073.0, "avg_ta": 10208, "adtc": 712.0}], "daily": [{"date": "01/03/2026", "net": 251750855.0, "sold": 23685.0, "is_weekend": true}, {"date": "02/03/2026", "net": 250636340.0, "sold": 25853.0, "is_weekend": false}, {"date": "03/03/2026", "net": 200074773.0, "sold": 20756.0, "is_weekend": false}, {"date": "04/03/2026", "net": 290281792.0, "sold": 29721.0, "is_weekend": false}, {"date": "05/03/2026", "net": 242273224.0, "sold": 24054.0, "is_weekend": false}, {"date": "06/03/2026", "net": 342280957.0, "sold": 34423.0, "is_weekend": false}, {"date": "07/03/2026", "net": 312504124.0, "sold": 31075.0, "is_weekend": true}, {"date": "08/03/2026", "net": 353882339.0, "sold": 33953.0, "is_weekend": true}, {"date": "09/03/2026", "net": 251398393.0, "sold": 25780.0, "is_weekend": false}, {"date": "10/03/2026", "net": 228097750.0, "sold": 22679.0, "is_weekend": false}, {"date": "11/03/2026", "net": 284403451.0, "sold": 29196.0, "is_weekend": false}, {"date": "12/03/2026", "net": 239314640.0, "sold": 23920.0, "is_weekend": false}, {"date": "13/03/2026", "net": 259173038.0, "sold": 26181.0, "is_weekend": false}, {"date": "14/03/2026", "net": 273032120.0, "sold": 26545.0, "is_weekend": true}, {"date": "15/03/2026", "net": 256384083.0, "sold": 25186.0, "is_weekend": true}, {"date": "16/03/2026", "net": 228955963.0, "sold": 23122.0, "is_weekend": false}, {"date": "17/03/2026", "net": 217205540.0, "sold": 21683.0, "is_weekend": false}, {"date": "18/03/2026", "net": 284908422.0, "sold": 28894.0, "is_weekend": false}, {"date": "19/03/2026", "net": 228682165.0, "sold": 23926.0, "is_weekend": false}, {"date": "20/03/2026", "net": 230228564.0, "sold": 24115.0, "is_weekend": false}, {"date": "21/03/2026", "net": 259289756.0, "sold": 25377.0, "is_weekend": true}, {"date": "22/03/2026", "net": 259046395.0, "sold": 25534.0, "is_weekend": true}, {"date": "23/03/2026", "net": 204291118.0, "sold": 21326.0, "is_weekend": false}, {"date": "24/03/2026", "net": 204303414.0, "sold": 20057.0, "is_weekend": false}, {"date": "25/03/2026", "net": 273958325.0, "sold": 27670.0, "is_weekend": false}, {"date": "26/03/2026", "net": 221300286.0, "sold": 21761.0, "is_weekend": false}, {"date": "27/03/2026", "net": 234316577.0, "sold": 24358.0, "is_weekend": false}, {"date": "28/03/2026", "net": 236309819.0, "sold": 23166.0, "is_weekend": true}, {"date": "29/03/2026", "net": 243360598.0, "sold": 23683.0, "is_weekend": true}, {"date": "30/03/2026", "net": 222630407.0, "sold": 22493.0, "is_weekend": false}, {"date": "31/03/2026", "net": 214573255.0, "sold": 21562.0, "is_weekend": false}], "net_per_store": 352925677, "avg_ta": 9938, "adtc": 1145.6}, {"city": "Thái Nguyên", "region": "Đông Bắc Bộ", "net": 432947850.0, "sold": 53107.0, "stores": 1, "store_list": [{"store": "Trà Sữa Hoa Sen - Đại Từ", "net": 432947850.0, "sold": 53107.0, "avg_ta": 8152, "adtc": 1713.1}], "daily": [{"date": "01/03/2026", "net": 21858256.0, "sold": 2705.0, "is_weekend": true}, {"date": "02/03/2026", "net": 10756651.0, "sold": 1381.0, "is_weekend": false}, {"date": "03/03/2026", "net": 15417881.0, "sold": 2094.0, "is_weekend": false}, {"date": "04/03/2026", "net": 11670393.0, "sold": 1423.0, "is_weekend": false}, {"date": "05/03/2026", "net": 8852862.0, "sold": 1123.0, "is_weekend": false}, {"date": "06/03/2026", "net": 15271358.0, "sold": 2113.0, "is_weekend": false}, {"date": "07/03/2026", "net": 18872313.0, "sold": 2268.0, "is_weekend": true}, {"date": "08/03/2026", "net": 20536260.0, "sold": 2771.0, "is_weekend": true}, {"date": "09/03/2026", "net": 9163579.0, "sold": 1059.0, "is_weekend": false}, {"date": "10/03/2026", "net": 13754850.0, "sold": 1764.0, "is_weekend": false}, {"date": "11/03/2026", "net": 14370345.0, "sold": 1855.0, "is_weekend": false}, {"date": "12/03/2026", "net": 12923783.0, "sold": 1670.0, "is_weekend": false}, {"date": "13/03/2026", "net": 13478866.0, "sold": 1792.0, "is_weekend": false}, {"date": "14/03/2026", "net": 16288770.0, "sold": 1926.0, "is_weekend": true}, {"date": "15/03/2026", "net": 16498881.0, "sold": 2069.0, "is_weekend": true}, {"date": "16/03/2026", "net": 12472362.0, "sold": 1710.0, "is_weekend": false}, {"date": "17/03/2026", "net": 11722108.0, "sold": 1581.0, "is_weekend": false}, {"date": "18/03/2026", "net": 13633544.0, "sold": 1707.0, "is_weekend": false}, {"date": "19/03/2026", "net": 10540812.0, "sold": 1265.0, "is_weekend": false}, {"date": "20/03/2026", "net": 12005664.0, "sold": 1561.0, "is_weekend": false}, {"date": "21/03/2026", "net": 15196956.0, "sold": 1943.0, "is_weekend": true}, {"date": "22/03/2026", "net": 17426264.0, "sold": 2190.0, "is_weekend": true}, {"date": "23/03/2026", "net": 10701192.0, "sold": 1396.0, "is_weekend": false}, {"date": "24/03/2026", "net": 10675161.0, "sold": 1331.0, "is_weekend": false}, {"date": "25/03/2026", "net": 12318355.0, "sold": 1525.0, "is_weekend": false}, {"date": "26/03/2026", "net": 13043234.0, "sold": 1478.0, "is_weekend": false}, {"date": "27/03/2026", "net": 12776700.0, "sold": 1492.0, "is_weekend": false}, {"date": "28/03/2026", "net": 14451777.0, "sold": 1693.0, "is_weekend": true}, {"date": "29/03/2026", "net": 12989984.0, "sold": 1549.0, "is_weekend": true}, {"date": "30/03/2026", "net": 13307921.0, "sold": 1797.0, "is_weekend": false}, {"date": "31/03/2026", "net": 16186069.0, "sold": 2057.0, "is_weekend": false}], "net_per_store": 432947850, "avg_ta": 8152, "adtc": 1713.1}, {"city": "Đà Nẵng", "region": "Miền Trung", "net": 269839338.0, "sold": 25440.0, "stores": 1, "store_list": [{"store": "BLP Trà Sữa Hoa Sen - Đà Nẵng", "net": 269839338.0, "sold": 25440.0, "avg_ta": 10607, "adtc": 820.6}], "daily": [{"date": "01/03/2026", "net": 8756780.0, "sold": 690.0, "is_weekend": true}, {"date": "02/03/2026", "net": 7770407.0, "sold": 764.0, "is_weekend": false}, {"date": "03/03/2026", "net": 6783509.0, "sold": 631.0, "is_weekend": false}, {"date": "04/03/2026", "net": 12253590.0, "sold": 1224.0, "is_weekend": false}, {"date": "05/03/2026", "net": 7563732.0, "sold": 680.0, "is_weekend": false}, {"date": "06/03/2026", "net": 6924131.0, "sold": 605.0, "is_weekend": false}, {"date": "07/03/2026", "net": 10804846.0, "sold": 1035.0, "is_weekend": true}, {"date": "08/03/2026", "net": 16209877.0, "sold": 1415.0, "is_weekend": true}, {"date": "09/03/2026", "net": 8642382.0, "sold": 863.0, "is_weekend": false}, {"date": "10/03/2026", "net": 7097284.0, "sold": 683.0, "is_weekend": false}, {"date": "11/03/2026", "net": 11494389.0, "sold": 1121.0, "is_weekend": false}, {"date": "12/03/2026", "net": 8640194.0, "sold": 854.0, "is_weekend": false}, {"date": "13/03/2026", "net": 8023216.0, "sold": 743.0, "is_weekend": false}, {"date": "14/03/2026", "net": 10019726.0, "sold": 909.0, "is_weekend": true}, {"date": "15/03/2026", "net": 10090571.0, "sold": 888.0, "is_weekend": true}, {"date": "16/03/2026", "net": 8212845.0, "sold": 648.0, "is_weekend": false}, {"date": "17/03/2026", "net": 6373635.0, "sold": 618.0, "is_weekend": false}, {"date": "18/03/2026", "net": 10025303.0, "sold": 983.0, "is_weekend": false}, {"date": "19/03/2026", "net": 8113092.0, "sold": 786.0, "is_weekend": false}, {"date": "20/03/2026", "net": 8358370.0, "sold": 886.0, "is_weekend": false}, {"date": "21/03/2026", "net": 10251413.0, "sold": 964.0, "is_weekend": true}, {"date": "22/03/2026", "net": 15464951.0, "sold": 1411.0, "is_weekend": true}, {"date": "23/03/2026", "net": 6150457.0, "sold": 689.0, "is_weekend": false}, {"date": "24/03/2026", "net": 6306475.0, "sold": 596.0, "is_weekend": false}, {"date": "25/03/2026", "net": 9108801.0, "sold": 928.0, "is_weekend": false}, {"date": "26/03/2026", "net": 8315500.0, "sold": 714.0, "is_weekend": false}, {"date": "27/03/2026", "net": 6938623.0, "sold": 630.0, "is_weekend": false}, {"date": "28/03/2026", "net": 7024194.0, "sold": 675.0, "is_weekend": true}, {"date": "29/03/2026", "net": 8374309.0, "sold": 819.0, "is_weekend": true}, {"date": "30/03/2026", "net": 7005015.0, "sold": 662.0, "is_weekend": false}, {"date": "31/03/2026", "net": 4501050.0, "sold": 415.0, "is_weekend": false}], "net_per_store": 269839338, "avg_ta": 10607, "adtc": 820.6}, {"city": "Hải Phòng", "region": "Đồng bằng sông Hồng", "net": 1784706760.0, "sold": 165416.0, "stores": 5, "store_list": [{"store": "BLP Trà Sữa Hoa Sen - Lạch Tray", "net": 478431747.0, "sold": 45757.0, "avg_ta": 10456, "adtc": 1476.0}, {"store": "BLP Trà Sữa Hoa Sen - Nguyễn Đức Cảnh", "net": 652853908.0, "sold": 64755.0, "avg_ta": 10082, "adtc": 2088.9}, {"store": "BLP Trà Sữa Hoa Sen - Trần Nguyên Hãn", "net": 432497864.0, "sold": 40694.0, "avg_ta": 10628, "adtc": 1312.7}, {"store": "Trà Sữa Hoa Sen - Thủy Nguyên", "net": 62772578.0, "sold": 4515.0, "avg_ta": 13903, "adtc": 145.6}, {"store": "Trà Sữa Hoa Sen - Vũ Yên", "net": 158150663.0, "sold": 9695.0, "avg_ta": 16313, "adtc": 312.7}], "daily": [{"date": "01/03/2026", "net": 60176741.0, "sold": 5356.0, "is_weekend": true}, {"date": "02/03/2026", "net": 44745581.0, "sold": 4359.0, "is_weekend": false}, {"date": "03/03/2026", "net": 38456938.0, "sold": 3489.0, "is_weekend": false}, {"date": "04/03/2026", "net": 44901536.0, "sold": 4148.0, "is_weekend": false}, {"date": "05/03/2026", "net": 41781835.0, "sold": 3650.0, "is_weekend": false}, {"date": "06/03/2026", "net": 246353109.0, "sold": 28080.0, "is_weekend": false}, {"date": "07/03/2026", "net": 69094854.0, "sold": 6011.0, "is_weekend": true}, {"date": "08/03/2026", "net": 72478107.0, "sold": 5986.0, "is_weekend": true}, {"date": "09/03/2026", "net": 49927969.0, "sold": 4642.0, "is_weekend": false}, {"date": "10/03/2026", "net": 44686656.0, "sold": 4026.0, "is_weekend": false}, {"date": "11/03/2026", "net": 55612837.0, "sold": 5137.0, "is_weekend": false}, {"date": "12/03/2026", "net": 45549403.0, "sold": 4010.0, "is_weekend": false}, {"date": "13/03/2026", "net": 43869599.0, "sold": 3970.0, "is_weekend": false}, {"date": "14/03/2026", "net": 57059025.0, "sold": 5165.0, "is_weekend": true}, {"date": "15/03/2026", "net": 53377186.0, "sold": 4738.0, "is_weekend": true}, {"date": "16/03/2026", "net": 48888428.0, "sold": 4696.0, "is_weekend": false}, {"date": "17/03/2026", "net": 43846304.0, "sold": 4061.0, "is_weekend": false}, {"date": "18/03/2026", "net": 50332855.0, "sold": 4498.0, "is_weekend": false}, {"date": "19/03/2026", "net": 44087989.0, "sold": 4187.0, "is_weekend": false}, {"date": "20/03/2026", "net": 49518410.0, "sold": 4563.0, "is_weekend": false}, {"date": "21/03/2026", "net": 55456071.0, "sold": 4800.0, "is_weekend": true}, {"date": "22/03/2026", "net": 42659284.0, "sold": 3665.0, "is_weekend": true}, {"date": "23/03/2026", "net": 40662612.0, "sold": 4165.0, "is_weekend": false}, {"date": "24/03/2026", "net": 49261047.0, "sold": 4142.0, "is_weekend": false}, {"date": "25/03/2026", "net": 65595381.0, "sold": 6146.0, "is_weekend": false}, {"date": "26/03/2026", "net": 55763768.0, "sold": 4742.0, "is_weekend": false}, {"date": "27/03/2026", "net": 54142904.0, "sold": 4751.0, "is_weekend": false}, {"date": "28/03/2026", "net": 60993421.0, "sold": 5203.0, "is_weekend": true}, {"date": "29/03/2026", "net": 53730378.0, "sold": 4657.0, "is_weekend": true}, {"date": "30/03/2026", "net": 56313136.0, "sold": 4949.0, "is_weekend": false}, {"date": "31/03/2026", "net": 40401429.0, "sold": 3483.0, "is_weekend": false}], "net_per_store": 356941352, "avg_ta": 10789, "adtc": 1067.2}, {"city": "Bắc Giang", "region": "Đông Bắc Bộ", "net": 61901080.0, "sold": 2742.0, "stores": 1, "store_list": [{"store": "Trà Sữa Hoa Sen - Bắc Giang", "net": 61901080.0, "sold": 2742.0, "avg_ta": 22575, "adtc": 88.5}], "daily": [{"date": "01/03/2026", "net": 1279262.0, "sold": 48.0, "is_weekend": true}, {"date": "02/03/2026", "net": 1208253.0, "sold": 52.0, "is_weekend": false}, {"date": "03/03/2026", "net": 2125354.0, "sold": 87.0, "is_weekend": false}, {"date": "04/03/2026", "net": 3119533.0, "sold": 149.0, "is_weekend": false}, {"date": "05/03/2026", "net": 1693474.0, "sold": 74.0, "is_weekend": false}, {"date": "06/03/2026", "net": 1364531.0, "sold": 62.0, "is_weekend": false}, {"date": "07/03/2026", "net": 2254917.0, "sold": 90.0, "is_weekend": true}, {"date": "08/03/2026", "net": 2474566.0, "sold": 127.0, "is_weekend": true}, {"date": "09/03/2026", "net": 1657784.0, "sold": 87.0, "is_weekend": false}, {"date": "10/03/2026", "net": 1578398.0, "sold": 74.0, "is_weekend": false}, {"date": "11/03/2026", "net": 2175363.0, "sold": 103.0, "is_weekend": false}, {"date": "12/03/2026", "net": 927241.0, "sold": 44.0, "is_weekend": false}, {"date": "13/03/2026", "net": 1934054.0, "sold": 86.0, "is_weekend": false}, {"date": "14/03/2026", "net": 1549625.0, "sold": 96.0, "is_weekend": true}, {"date": "15/03/2026", "net": 1118528.0, "sold": 53.0, "is_weekend": true}, {"date": "16/03/2026", "net": 928413.0, "sold": 34.0, "is_weekend": false}, {"date": "17/03/2026", "net": 1482455.0, "sold": 69.0, "is_weekend": false}, {"date": "18/03/2026", "net": 1778081.0, "sold": 91.0, "is_weekend": false}, {"date": "19/03/2026", "net": 1531893.0, "sold": 78.0, "is_weekend": false}, {"date": "20/03/2026", "net": 1433947.0, "sold": 69.0, "is_weekend": false}, {"date": "21/03/2026", "net": 2175374.0, "sold": 102.0, "is_weekend": true}, {"date": "22/03/2026", "net": 1476559.0, "sold": 60.0, "is_weekend": true}, {"date": "23/03/2026", "net": 1234401.0, "sold": 56.0, "is_weekend": false}, {"date": "24/03/2026", "net": 2234762.0, "sold": 98.0, "is_weekend": false}, {"date": "25/03/2026", "net": 11156978.0, "sold": 463.0, "is_weekend": false}, {"date": "26/03/2026", "net": 1250420.0, "sold": 68.0, "is_weekend": false}, {"date": "27/03/2026", "net": 1830340.0, "sold": 90.0, "is_weekend": false}, {"date": "28/03/2026", "net": 1960177.0, "sold": 89.0, "is_weekend": true}, {"date": "29/03/2026", "net": 2018392.0, "sold": 92.0, "is_weekend": true}, {"date": "30/03/2026", "net": 1247233.0, "sold": 53.0, "is_weekend": false}, {"date": "31/03/2026", "net": 1015657.0, "sold": 46.0, "is_weekend": false}], "net_per_store": 61901080, "avg_ta": 22575, "adtc": 88.5}, {"city": "Bắc Ninh", "region": "Đồng bằng sông Hồng", "net": 549631140.0, "sold": 44633.0, "stores": 2, "store_list": [{"store": "Trà Sữa Hoa Sen - Hàn Thuyên ( Bắc Ninh)", "net": 237835006.0, "sold": 14331.0, "avg_ta": 16596, "adtc": 462.3}, {"store": "Trà Sữa Hoa Sen - Từ Sơn", "net": 311796134.0, "sold": 30302.0, "avg_ta": 10290, "adtc": 977.5}], "daily": [{"date": "01/03/2026", "net": 22549871.0, "sold": 1721.0, "is_weekend": true}, {"date": "02/03/2026", "net": 17670294.0, "sold": 1445.0, "is_weekend": false}, {"date": "03/03/2026", "net": 4945709.0, "sold": 350.0, "is_weekend": false}, {"date": "04/03/2026", "net": 19069550.0, "sold": 1687.0, "is_weekend": false}, {"date": "05/03/2026", "net": 14024592.0, "sold": 1221.0, "is_weekend": false}, {"date": "06/03/2026", "net": 17075085.0, "sold": 1308.0, "is_weekend": false}, {"date": "07/03/2026", "net": 20669098.0, "sold": 1478.0, "is_weekend": true}, {"date": "08/03/2026", "net": 28919804.0, "sold": 2475.0, "is_weekend": true}, {"date": "09/03/2026", "net": 18355453.0, "sold": 1590.0, "is_weekend": false}, {"date": "10/03/2026", "net": 16133326.0, "sold": 1392.0, "is_weekend": false}, {"date": "11/03/2026", "net": 21470258.0, "sold": 1788.0, "is_weekend": false}, {"date": "12/03/2026", "net": 14680871.0, "sold": 1187.0, "is_weekend": false}, {"date": "13/03/2026", "net": 18971600.0, "sold": 1362.0, "is_weekend": false}, {"date": "14/03/2026", "net": 24629250.0, "sold": 1895.0, "is_weekend": true}, {"date": "15/03/2026", "net": 19285205.0, "sold": 1573.0, "is_weekend": true}, {"date": "16/03/2026", "net": 15876805.0, "sold": 1316.0, "is_weekend": false}, {"date": "17/03/2026", "net": 12840528.0, "sold": 990.0, "is_weekend": false}, {"date": "18/03/2026", "net": 21862270.0, "sold": 1977.0, "is_weekend": false}, {"date": "19/03/2026", "net": 11878214.0, "sold": 959.0, "is_weekend": false}, {"date": "20/03/2026", "net": 17219543.0, "sold": 1386.0, "is_weekend": false}, {"date": "21/03/2026", "net": 22994776.0, "sold": 1796.0, "is_weekend": true}, {"date": "22/03/2026", "net": 20059110.0, "sold": 1598.0, "is_weekend": true}, {"date": "23/03/2026", "net": 18178355.0, "sold": 1413.0, "is_weekend": false}, {"date": "24/03/2026", "net": 15762525.0, "sold": 1228.0, "is_weekend": false}, {"date": "25/03/2026", "net": 19043134.0, "sold": 1633.0, "is_weekend": false}, {"date": "26/03/2026", "net": 15438367.0, "sold": 1106.0, "is_weekend": false}, {"date": "27/03/2026", "net": 16026858.0, "sold": 1368.0, "is_weekend": false}, {"date": "28/03/2026", "net": 16180525.0, "sold": 1150.0, "is_weekend": true}, {"date": "29/03/2026", "net": 20537249.0, "sold": 1740.0, "is_weekend": true}, {"date": "30/03/2026", "net": 14771210.0, "sold": 1341.0, "is_weekend": false}, {"date": "31/03/2026", "net": 13860269.0, "sold": 1062.0, "is_weekend": false}], "net_per_store": 274815570, "avg_ta": 12314, "adtc": 719.9}, {"city": "Hà Tĩnh", "region": "Bắc Trung Bộ", "net": 101939922.0, "sold": 8783.0, "stores": 1, "store_list": [{"store": "Trà Sữa Hoa Sen - Hà Tĩnh", "net": 101939922.0, "sold": 8783.0, "avg_ta": 11607, "adtc": 283.3}], "daily": [{"date": "01/03/2026", "net": 3469998.0, "sold": 292.0, "is_weekend": true}, {"date": "02/03/2026", "net": 2837067.0, "sold": 233.0, "is_weekend": false}, {"date": "03/03/2026", "net": 1957055.0, "sold": 167.0, "is_weekend": false}, {"date": "04/03/2026", "net": 2928705.0, "sold": 241.0, "is_weekend": false}, {"date": "05/03/2026", "net": 3010045.0, "sold": 255.0, "is_weekend": false}, {"date": "06/03/2026", "net": 2472721.0, "sold": 201.0, "is_weekend": false}, {"date": "07/03/2026", "net": 3716295.0, "sold": 317.0, "is_weekend": true}, {"date": "08/03/2026", "net": 4755034.0, "sold": 393.0, "is_weekend": true}, {"date": "09/03/2026", "net": 1442985.0, "sold": 147.0, "is_weekend": false}, {"date": "10/03/2026", "net": 1888806.0, "sold": 183.0, "is_weekend": false}, {"date": "11/03/2026", "net": 2584223.0, "sold": 208.0, "is_weekend": false}, {"date": "12/03/2026", "net": 3012558.0, "sold": 242.0, "is_weekend": false}, {"date": "13/03/2026", "net": 2455034.0, "sold": 241.0, "is_weekend": false}, {"date": "14/03/2026", "net": 2661279.0, "sold": 226.0, "is_weekend": true}, {"date": "15/03/2026", "net": 2551194.0, "sold": 228.0, "is_weekend": true}, {"date": "16/03/2026", "net": 1473380.0, "sold": 131.0, "is_weekend": false}, {"date": "17/03/2026", "net": 3769462.0, "sold": 332.0, "is_weekend": false}, {"date": "18/03/2026", "net": 4603839.0, "sold": 420.0, "is_weekend": false}, {"date": "19/03/2026", "net": 2971256.0, "sold": 247.0, "is_weekend": false}, {"date": "20/03/2026", "net": 4594586.0, "sold": 418.0, "is_weekend": false}, {"date": "21/03/2026", "net": 3392139.0, "sold": 300.0, "is_weekend": true}, {"date": "22/03/2026", "net": 2385313.0, "sold": 220.0, "is_weekend": true}, {"date": "23/03/2026", "net": 2096673.0, "sold": 186.0, "is_weekend": false}, {"date": "24/03/2026", "net": 3198820.0, "sold": 273.0, "is_weekend": false}, {"date": "25/03/2026", "net": 5567493.0, "sold": 506.0, "is_weekend": false}, {"date": "26/03/2026", "net": 3165763.0, "sold": 265.0, "is_weekend": false}, {"date": "27/03/2026", "net": 4177257.0, "sold": 378.0, "is_weekend": false}, {"date": "28/03/2026", "net": 3939076.0, "sold": 356.0, "is_weekend": true}, {"date": "29/03/2026", "net": 5320105.0, "sold": 480.0, "is_weekend": true}, {"date": "30/03/2026", "net": 4176292.0, "sold": 388.0, "is_weekend": false}, {"date": "31/03/2026", "net": 3925650.0, "sold": 341.0, "is_weekend": false}], "net_per_store": 101939922, "avg_ta": 11607, "adtc": 283.3}, {"city": "Thái Bình", "region": "Đồng bằng sông Hồng", "net": 1142305168.0, "sold": 121251.0, "stores": 4, "store_list": [{"store": "Trà Sữa Hoa Sen - Quỳnh Côi", "net": 175092763.0, "sold": 16264.0, "avg_ta": 10766, "adtc": 524.6}, {"store": "Trà Sữa Hoa Sen - Kỳ Bá Thái Bình", "net": 335305761.0, "sold": 38564.0, "avg_ta": 8695, "adtc": 1244.0}, {"store": "Trà Sữa Hoa Sen - Lê Thánh Tông Thái Bình", "net": 305509286.0, "sold": 33886.0, "avg_ta": 9016, "adtc": 1093.1}, {"store": "TRÀ SỮA HOA SEN - THÁI BÌNH", "net": 326397358.0, "sold": 32537.0, "avg_ta": 10032, "adtc": 1049.6}], "daily": [{"date": "01/03/2026", "net": 44767260.0, "sold": 4366.0, "is_weekend": true}, {"date": "02/03/2026", "net": 35026922.0, "sold": 3480.0, "is_weekend": false}, {"date": "03/03/2026", "net": 26720489.0, "sold": 2778.0, "is_weekend": false}, {"date": "04/03/2026", "net": 41339131.0, "sold": 4170.0, "is_weekend": false}, {"date": "05/03/2026", "net": 41147039.0, "sold": 4866.0, "is_weekend": false}, {"date": "06/03/2026", "net": 39601970.0, "sold": 4712.0, "is_weekend": false}, {"date": "07/03/2026", "net": 56954868.0, "sold": 6118.0, "is_weekend": true}, {"date": "08/03/2026", "net": 63211286.0, "sold": 6351.0, "is_weekend": true}, {"date": "09/03/2026", "net": 35079864.0, "sold": 3633.0, "is_weekend": false}, {"date": "10/03/2026", "net": 30495487.0, "sold": 3147.0, "is_weekend": false}, {"date": "11/03/2026", "net": 38755180.0, "sold": 4030.0, "is_weekend": false}, {"date": "12/03/2026", "net": 28967152.0, "sold": 2936.0, "is_weekend": false}, {"date": "13/03/2026", "net": 35653394.0, "sold": 3654.0, "is_weekend": false}, {"date": "14/03/2026", "net": 36205938.0, "sold": 3656.0, "is_weekend": true}, {"date": "15/03/2026", "net": 36787443.0, "sold": 3844.0, "is_weekend": true}, {"date": "16/03/2026", "net": 29098170.0, "sold": 3256.0, "is_weekend": false}, {"date": "17/03/2026", "net": 23363447.0, "sold": 2373.0, "is_weekend": false}, {"date": "18/03/2026", "net": 36831174.0, "sold": 3871.0, "is_weekend": false}, {"date": "19/03/2026", "net": 38496330.0, "sold": 4695.0, "is_weekend": false}, {"date": "20/03/2026", "net": 38115012.0, "sold": 4577.0, "is_weekend": false}, {"date": "21/03/2026", "net": 45262260.0, "sold": 5430.0, "is_weekend": true}, {"date": "22/03/2026", "net": 37500947.0, "sold": 3845.0, "is_weekend": true}, {"date": "23/03/2026", "net": 24193859.0, "sold": 2692.0, "is_weekend": false}, {"date": "24/03/2026", "net": 22864629.0, "sold": 2393.0, "is_weekend": false}, {"date": "25/03/2026", "net": 36445838.0, "sold": 3697.0, "is_weekend": false}, {"date": "26/03/2026", "net": 35498425.0, "sold": 4228.0, "is_weekend": false}, {"date": "27/03/2026", "net": 37456837.0, "sold": 4309.0, "is_weekend": false}, {"date": "28/03/2026", "net": 48855589.0, "sold": 5394.0, "is_weekend": true}, {"date": "29/03/2026", "net": 33210748.0, "sold": 3247.0, "is_weekend": true}, {"date": "30/03/2026", "net": 29647723.0, "sold": 3057.0, "is_weekend": false}, {"date": "31/03/2026", "net": 24683693.0, "sold": 2465.0, "is_weekend": false}], "net_per_store": 285576292, "avg_ta": 9421, "adtc": 977.8}, {"city": "Nam Định", "region": "Đồng bằng sông Hồng", "net": 600472117.0, "sold": 42140.0, "stores": 2, "store_list": [{"store": "Trà Sữa Hoa Sen - Nam Định", "net": 62446855.0, "sold": 3042.0, "avg_ta": 20528, "adtc": 98.1}, {"store": "Trà Sữa Hoa Sen - Xuân Trường", "net": 538025262.0, "sold": 39098.0, "avg_ta": 13761, "adtc": 1261.2}], "daily": [{"date": "01/03/2026", "net": 24801192.0, "sold": 1763.0, "is_weekend": true}, {"date": "02/03/2026", "net": 23272694.0, "sold": 1708.0, "is_weekend": false}, {"date": "03/03/2026", "net": 19602245.0, "sold": 1167.0, "is_weekend": false}, {"date": "04/03/2026", "net": 14950872.0, "sold": 986.0, "is_weekend": false}, {"date": "05/03/2026", "net": 15435809.0, "sold": 1068.0, "is_weekend": false}, {"date": "06/03/2026", "net": 21508218.0, "sold": 1529.0, "is_weekend": false}, {"date": "07/03/2026", "net": 33802792.0, "sold": 2284.0, "is_weekend": true}, {"date": "08/03/2026", "net": 31643014.0, "sold": 2322.0, "is_weekend": true}, {"date": "09/03/2026", "net": 13912482.0, "sold": 963.0, "is_weekend": false}, {"date": "10/03/2026", "net": 16528942.0, "sold": 1132.0, "is_weekend": false}, {"date": "11/03/2026", "net": 16457949.0, "sold": 1027.0, "is_weekend": false}, {"date": "12/03/2026", "net": 16266892.0, "sold": 937.0, "is_weekend": false}, {"date": "13/03/2026", "net": 18351460.0, "sold": 1249.0, "is_weekend": false}, {"date": "14/03/2026", "net": 23176863.0, "sold": 1485.0, "is_weekend": true}, {"date": "15/03/2026", "net": 26867064.0, "sold": 1886.0, "is_weekend": true}, {"date": "16/03/2026", "net": 14466794.0, "sold": 1087.0, "is_weekend": false}, {"date": "17/03/2026", "net": 14567018.0, "sold": 952.0, "is_weekend": false}, {"date": "18/03/2026", "net": 14854118.0, "sold": 907.0, "is_weekend": false}, {"date": "19/03/2026", "net": 11697497.0, "sold": 833.0, "is_weekend": false}, {"date": "20/03/2026", "net": 16563246.0, "sold": 1090.0, "is_weekend": false}, {"date": "21/03/2026", "net": 33177463.0, "sold": 2413.0, "is_weekend": true}, {"date": "22/03/2026", "net": 19157026.0, "sold": 1488.0, "is_weekend": true}, {"date": "23/03/2026", "net": 15511009.0, "sold": 1089.0, "is_weekend": false}, {"date": "24/03/2026", "net": 13008974.0, "sold": 900.0, "is_weekend": false}, {"date": "25/03/2026", "net": 16752007.0, "sold": 1014.0, "is_weekend": false}, {"date": "26/03/2026", "net": 17610906.0, "sold": 1029.0, "is_weekend": false}, {"date": "27/03/2026", "net": 18469087.0, "sold": 1193.0, "is_weekend": false}, {"date": "28/03/2026", "net": 25621295.0, "sold": 1683.0, "is_weekend": true}, {"date": "29/03/2026", "net": 31538531.0, "sold": 2128.0, "is_weekend": true}, {"date": "30/03/2026", "net": 17299210.0, "sold": 1047.0, "is_weekend": false}, {"date": "31/03/2026", "net": 16592436.0, "sold": 1041.0, "is_weekend": false}], "net_per_store": 300236058, "avg_ta": 14249, "adtc": 679.7}, {"city": "Quảng Bình", "region": "Bắc Trung Bộ", "net": 12929113.0, "sold": 833.0, "stores": 1, "store_list": [{"store": "Trà Sữa Hoa Sen - Quảng Bình", "net": 12929113.0, "sold": 833.0, "avg_ta": 15521, "adtc": 26.9}], "daily": [{"date": "01/03/2026", "net": 1141697.0, "sold": 51.0, "is_weekend": true}, {"date": "02/03/2026", "net": 236824.0, "sold": 10.0, "is_weekend": false}, {"date": "03/03/2026", "net": 141465.0, "sold": 6.0, "is_weekend": false}, {"date": "04/03/2026", "net": 58493.0, "sold": 10.0, "is_weekend": false}, {"date": "05/03/2026", "net": 409807.0, "sold": 26.0, "is_weekend": false}, {"date": "06/03/2026", "net": 208986.0, "sold": 18.0, "is_weekend": false}, {"date": "07/03/2026", "net": 284137.0, "sold": 30.0, "is_weekend": true}, {"date": "08/03/2026", "net": 1129331.0, "sold": 67.0, "is_weekend": true}, {"date": "09/03/2026", "net": 1256621.0, "sold": 57.0, "is_weekend": false}, {"date": "10/03/2026", "net": 419480.0, "sold": 28.0, "is_weekend": false}, {"date": "11/03/2026", "net": 93089.0, "sold": 6.0, "is_weekend": false}, {"date": "12/03/2026", "net": 642920.0, "sold": 47.0, "is_weekend": false}, {"date": "13/03/2026", "net": 206121.0, "sold": 23.0, "is_weekend": false}, {"date": "14/03/2026", "net": 798854.0, "sold": 59.0, "is_weekend": true}, {"date": "15/03/2026", "net": 942364.0, "sold": 54.0, "is_weekend": true}, {"date": "16/03/2026", "net": 440919.0, "sold": 20.0, "is_weekend": false}, {"date": "17/03/2026", "net": 0, "sold": 0, "is_weekend": false}, {"date": "18/03/2026", "net": 127115.0, "sold": 8.0, "is_weekend": false}, {"date": "19/03/2026", "net": 78079.0, "sold": 6.0, "is_weekend": false}, {"date": "20/03/2026", "net": 385539.0, "sold": 32.0, "is_weekend": false}, {"date": "21/03/2026", "net": 741409.0, "sold": 45.0, "is_weekend": true}, {"date": "22/03/2026", "net": 152573.0, "sold": 6.0, "is_weekend": true}, {"date": "23/03/2026", "net": 57916.0, "sold": 8.0, "is_weekend": false}, {"date": "24/03/2026", "net": 207045.0, "sold": 14.0, "is_weekend": false}, {"date": "25/03/2026", "net": 0, "sold": 0, "is_weekend": false}, {"date": "26/03/2026", "net": 377809.0, "sold": 26.0, "is_weekend": false}, {"date": "27/03/2026", "net": 524450.0, "sold": 24.0, "is_weekend": false}, {"date": "28/03/2026", "net": 602970.0, "sold": 42.0, "is_weekend": true}, {"date": "29/03/2026", "net": 233639.0, "sold": 16.0, "is_weekend": true}, {"date": "30/03/2026", "net": 285342.0, "sold": 16.0, "is_weekend": false}, {"date": "31/03/2026", "net": 914690.0, "sold": 65.0, "is_weekend": false}], "net_per_store": 12929113, "avg_ta": 15521, "adtc": 26.9}, {"city": "Tuyên Quang", "region": "Đông Bắc Bộ", "net": 695862034.0, "sold": 55021.0, "stores": 1, "store_list": [{"store": "Trà Sữa Hoa Sen _ Tuyên Quang", "net": 695862034.0, "sold": 55021.0, "avg_ta": 12647, "adtc": 1774.9}], "daily": [{"date": "01/03/2026", "net": 10849256.0, "sold": 858.0, "is_weekend": true}, {"date": "02/03/2026", "net": 6942819.0, "sold": 510.0, "is_weekend": false}, {"date": "03/03/2026", "net": 25668832.0, "sold": 1854.0, "is_weekend": false}, {"date": "04/03/2026", "net": 38715504.0, "sold": 2908.0, "is_weekend": false}, {"date": "05/03/2026", "net": 40509268.0, "sold": 3148.0, "is_weekend": false}, {"date": "06/03/2026", "net": 37668132.0, "sold": 2944.0, "is_weekend": false}, {"date": "07/03/2026", "net": 41156588.0, "sold": 3276.0, "is_weekend": true}, {"date": "08/03/2026", "net": 42658224.0, "sold": 3150.0, "is_weekend": true}, {"date": "09/03/2026", "net": 28389224.0, "sold": 2183.0, "is_weekend": false}, {"date": "10/03/2026", "net": 18880451.0, "sold": 1415.0, "is_weekend": false}, {"date": "11/03/2026", "net": 22224074.0, "sold": 1793.0, "is_weekend": false}, {"date": "12/03/2026", "net": 25475782.0, "sold": 2060.0, "is_weekend": false}, {"date": "13/03/2026", "net": 23657174.0, "sold": 1892.0, "is_weekend": false}, {"date": "14/03/2026", "net": 26052027.0, "sold": 2031.0, "is_weekend": true}, {"date": "15/03/2026", "net": 20981283.0, "sold": 1741.0, "is_weekend": true}, {"date": "16/03/2026", "net": 17829538.0, "sold": 1354.0, "is_weekend": false}, {"date": "17/03/2026", "net": 13957398.0, "sold": 1090.0, "is_weekend": false}, {"date": "18/03/2026", "net": 13131013.0, "sold": 1028.0, "is_weekend": false}, {"date": "19/03/2026", "net": 11471179.0, "sold": 862.0, "is_weekend": false}, {"date": "20/03/2026", "net": 15797691.0, "sold": 1242.0, "is_weekend": false}, {"date": "21/03/2026", "net": 19266107.0, "sold": 1542.0, "is_weekend": true}, {"date": "22/03/2026", "net": 14734037.0, "sold": 1191.0, "is_weekend": true}, {"date": "23/03/2026", "net": 11241193.0, "sold": 844.0, "is_weekend": false}, {"date": "24/03/2026", "net": 11820832.0, "sold": 959.0, "is_weekend": false}, {"date": "25/03/2026", "net": 14380661.0, "sold": 1134.0, "is_weekend": false}, {"date": "26/03/2026", "net": 33570765.0, "sold": 4089.0, "is_weekend": false}, {"date": "27/03/2026", "net": 32326058.0, "sold": 3620.0, "is_weekend": false}, {"date": "28/03/2026", "net": 22158289.0, "sold": 1761.0, "is_weekend": true}, {"date": "29/03/2026", "net": 19484299.0, "sold": 1491.0, "is_weekend": true}, {"date": "30/03/2026", "net": 15723264.0, "sold": 1189.0, "is_weekend": false}, {"date": "31/03/2026", "net": 11887045.0, "sold": 906.0, "is_weekend": false}], "net_per_store": 695862034, "avg_ta": 12647, "adtc": 1774.9}], "regions": [{"region": "Đồng bằng sông Hồng", "net": 11841480074.0, "sold": 1154730.0, "stores": 35, "cities": ["Hà Nội", "Hải Phòng", "Bắc Ninh", "Thái Bình", "Nam Định"]}, {"region": "Đông Bắc Bộ", "net": 1190710964.0, "sold": 110870.0, "stores": 3, "cities": ["Thái Nguyên", "Bắc Giang", "Tuyên Quang"]}, {"region": "Miền Trung", "net": 269839338.0, "sold": 25440.0, "stores": 1, "cities": ["Đà Nẵng"]}, {"region": "Bắc Trung Bộ", "net": 114869035.0, "sold": 9616.0, "stores": 2, "cities": ["Hà Tĩnh", "Quảng Bình"]}], "dates": ["01/03/2026", "02/03/2026", "03/03/2026", "04/03/2026", "05/03/2026", "06/03/2026", "07/03/2026", "08/03/2026", "09/03/2026", "10/03/2026", "11/03/2026", "12/03/2026", "13/03/2026", "14/03/2026", "15/03/2026", "16/03/2026", "17/03/2026", "18/03/2026", "19/03/2026", "20/03/2026", "21/03/2026", "22/03/2026", "23/03/2026", "24/03/2026", "25/03/2026", "26/03/2026", "27/03/2026", "28/03/2026", "29/03/2026", "30/03/2026", "31/03/2026"], "total_net": 13416899411.0, "total_sold": 1300656.0};
+const CITY_COLORS = {"H\u00e0 N\u1ed9i": "#1a6b45", "H\u1ea3i Ph\u00f2ng": "#2980b9", "Th\u00e1i B\u00ecnh": "#8e44ad", "Tuy\u00ean Quang": "#c8972a", "Nam \u0110\u1ecbnh": "#e74c3c", "B\u1eafc Ninh": "#16a085", "Th\u00e1i Nguy\u00ean": "#d35400", "\u0110\u00e0 N\u1eb5ng": "#7f8c8d", "H\u00e0 T\u0129nh": "#27ae60", "B\u1eafc Giang": "#f39c12", "Qu\u1ea3ng B\u00ecnh": "#95a5a6"};
+const REGION_COLORS = {
+  'Đồng bằng sông Hồng':'#1a6b45',
+  'Đông Bắc Bộ':'#c8972a',
+  'Miền Trung':'#2980b9',
+  'Bắc Trung Bộ':'#e74c3c'
+};
+
+function fmtVND(v){
+  if(v>=1e9) return (v/1e9).toFixed(2)+' tỷ';
+  if(v>=1e6) return Math.round(v/1e6).toLocaleString('vi-VN')+' tr';
+  return Math.round(v).toLocaleString('vi-VN');
+}
+function fmtFull(v){ return Math.round(v).toLocaleString('vi-VN')+' ₫'; }
+function fmtN(v){ return Math.round(v).toLocaleString('vi-VN'); }
+function pct(a,b){ return b?(a/b*100).toFixed(1)+'%':'0%'; }
+function hexAlpha(hex,a){ const r=parseInt(hex.slice(1,3),16),g=parseInt(hex.slice(3,5),16),b=parseInt(hex.slice(5,7),16); return `rgba(${r},${g},${b},${a})`; }
+
+const cities = GEO.cities.sort((a,b)=>b.net-a.net);
+const regions = GEO.regions.sort((a,b)=>b.net-a.net);
+const totalNet = GEO.total_net;
+const dateLabels = GEO.dates.map(d=>d.slice(0,5));
+
+// ── TAB CONTROL ──────────────────────────────────────────────────────────
+function showTab(id, btn){
+  document.querySelectorAll('.tab-panel').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  btn.classList.add('active');
+}
+
+// ══════════════════════════════════════════════════════════════════════════
+// TAB 1: REGION OVERVIEW
+// ══════════════════════════════════════════════════════════════════════════
+const rcEl = document.getElementById('region-cards');
+regions.forEach(r=>{
+  const col = REGION_COLORS[r.region]||'#666';
+  const p = (r.net/totalNet*100).toFixed(1);
+  rcEl.innerHTML+=`<div class="region-card" style="border-left-color:${col}" onclick="showTab('t2',document.querySelectorAll('.tab-btn')[1])">
+    <div class="rc-name" style="color:${col}">${r.region}</div>
+    <div class="rc-val" style="color:${col}">${fmtVND(r.net)}</div>
+    <div class="rc-sub">${r.stores} cửa hàng · ${r.cities.length} tỉnh/TP</div>
+    <span class="rc-pct" style="background:${col}">${p}% tổng DT</span>
+  </div>`;
+});
+
+new Chart(document.getElementById('chartRegionDonut'),{
+  type:'doughnut',
+  data:{
+    labels:regions.map(r=>r.region),
+    datasets:[{data:regions.map(r=>r.net),
+      backgroundColor:regions.map(r=>REGION_COLORS[r.region]||'#999'),
+      borderWidth:3,borderColor:'#fff'}]
+  },
+  options:{responsive:true,plugins:{
+    legend:{position:'bottom',labels:{font:{size:12},padding:12}},
+    tooltip:{callbacks:{label:ctx=>` ${ctx.label}: ${fmtVND(ctx.raw)} (${pct(ctx.raw,totalNet)})`}}
+  }}
+});
+
+new Chart(document.getElementById('chartRegionBar'),{
+  type:'bar',
+  data:{
+    labels:regions.map(r=>r.region),
+    datasets:[
+      {label:'Doanh Thu Net',data:regions.map(r=>r.net),backgroundColor:regions.map(r=>REGION_COLORS[r.region]),borderRadius:6,yAxisID:'y'},
+      {label:'Số cửa hàng',data:regions.map(r=>r.stores),backgroundColor:regions.map(r=>hexAlpha(REGION_COLORS[r.region]||'#999',0.3)),borderRadius:6,yAxisID:'y2',type:'line',borderColor:regions.map(r=>REGION_COLORS[r.region]),borderWidth:2,pointRadius:6,tension:0}
+    ]
+  },
+  options:{responsive:true,plugins:{legend:{position:'bottom'}},
+    scales:{
+      y:{ticks:{callback:v=>fmtVND(v)},grid:{color:'#eef3ee'}},
+      y2:{position:'right',title:{display:true,text:'Số CH'},grid:{drawOnChartArea:false}}
+    }
+  }
+});
+
+// City rank bars
+const crEl = document.getElementById('city-rank-bars');
+const maxCityNet = cities[0].net;
+cities.forEach((c,i)=>{
+  const col = CITY_COLORS[c.city]||'#888';
+  const w = Math.round(c.net/maxCityNet*100);
+  const rkClass = i===0?'rank1':i===1?'rank2':i===2?'rank3':'';
+  crEl.innerHTML+=`<div style="display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid #f0f5f0">
+    <div style="min-width:28px;text-align:center">${rkClass?`<span class="${rkClass}">${i+1}</span>`:`<span style="font-size:12px;color:var(--muted)">${i+1}</span>`}</div>
+    <div style="min-width:110px;font-weight:700;font-size:13px"><span class="city-dot" style="background:${col}"></span>${c.city}</div>
+    <div style="flex:1;background:#e8f5e9;border-radius:4px;height:10px">
+      <div style="background:${col};border-radius:4px;height:10px;width:${w}%"></div>
+    </div>
+    <div style="min-width:80px;text-align:right;font-weight:700;color:${col};font-size:13px">${fmtVND(c.net)}</div>
+    <div style="min-width:60px;text-align:right;font-size:11px;color:var(--muted)">${pct(c.net,totalNet)}</div>
+    <div style="min-width:45px;text-align:right;font-size:11px;color:var(--muted)">${c.stores} CH</div>
+  </div>`;
+});
+
+// ══════════════════════════════════════════════════════════════════════════
+// TAB 2: CITY COMPARISON
+// ══════════════════════════════════════════════════════════════════════════
+// Stats row: top metrics
+const statsEl = document.getElementById('city-stats-row');
+const metrics = [
+  {label:'#1 Doanh Thu',val:fmtVND(cities[0].net),sub:cities[0].city,color:CITY_COLORS[cities[0].city]},
+  {label:'DT/Cửa Hàng Cao Nhất',val:fmtVND(Math.max(...cities.map(c=>c.net_per_store))),sub:cities.reduce((a,b)=>a.net_per_store>b.net_per_store?a:b).city,color:'#8e44ad'},
+  {label:'Avg TA Cao Nhất',val:fmtFull(Math.max(...cities.map(c=>c.avg_ta))),sub:cities.reduce((a,b)=>a.avg_ta>b.avg_ta?a:b).city,color:'#c8972a'},
+  {label:'ADTC/CH Cao Nhất',val:fmtN(Math.max(...cities.map(c=>c.adtc))),sub:cities.reduce((a,b)=>a.adtc>b.adtc?a:b).city,color:'#2980b9'},
+  {label:'Tổng Tỉnh/TP',val:cities.length,sub:'4 vùng kinh tế',color:'#1a6b45'},
+];
+metrics.forEach(m=>{
+  statsEl.innerHTML+=`<div class="stat-mini">
+    <div class="sm-label">${m.label}</div>
+    <div class="sm-val" style="color:${m.color}">${m.val}</div>
+    <div class="sm-sub">${m.sub}</div>
+  </div>`;
+});
+
+// City table
+let citySortCol=3, citySortDir=-1;
+function renderCityTable(data){
+  const tbody=document.getElementById('city-tbody');
+  tbody.innerHTML='';
+  data.forEach((c,i)=>{
+    const col=CITY_COLORS[c.city]||'#888';
+    tbody.innerHTML+=`<tr>
+      <td><span class="city-dot" style="background:${col}"></span><strong>${c.city}</strong></td>
+      <td><span style="padding:2px 8px;border-radius:10px;font-size:11px;background:${hexAlpha(REGION_COLORS[c.region]||'#999',0.15)};color:${REGION_COLORS[c.region]||'#999'};font-weight:700">${c.region}</span></td>
+      <td style="text-align:center;font-weight:700">${c.stores}</td>
+      <td style="font-weight:800;color:${col}">${fmtFull(c.net)}</td>
+      <td>${pct(c.net,totalNet)}</td>
+      <td>${fmtVND(c.net_per_store)}</td>
+      <td>${fmtN(c.sold)}</td>
+      <td>${fmtN(c.adtc)}</td>
+      <td>${fmtFull(c.avg_ta)}</td>
+    </tr>`;
+  });
+}
+function sortCity(col){
+  if(citySortCol===col) citySortDir*=-1; else{citySortCol=col;citySortDir=-1;}
+  const keys=[null,'region','stores','net',null,'net_per_store','sold','adtc','avg_ta'];
+  const k=keys[col]||'net';
+  const sorted=[...cities].sort((a,b)=>citySortDir*(typeof a[k]==='string'?a[k].localeCompare(b[k],'vi'):a[k]-b[k]));
+  document.querySelectorAll('#city-table thead th .si').forEach((s,i)=>s.textContent=i===col?(citySortDir>0?'↑':'↓'):'↕');
+  renderCityTable(sorted);
+}
+renderCityTable(cities);
+
+// Store tiles by city
+const sbcEl=document.getElementById('store-by-city');
+cities.forEach(c=>{
+  const col=CITY_COLORS[c.city]||'#888';
+  const sorted=[...c.store_list].sort((a,b)=>b.net-a.net);
+  const maxNet=sorted[0]?.net||1;
+  let tilesHtml='<div class="store-grid">';
+  sorted.forEach((s,i)=>{
+    const shortN=s.store.replace(/^(BLP |TRÀ SỮA HOA SEN - |Trà Sữa Hoa Sen - |Trà Sữa Hoa Sen _ |Trà Sữa Hoa Sen _)/,'');
+    const w=Math.round(s.net/maxNet*100);
+    const rkTag=i===0&&sorted.length>1?'<span class="rank1">🏆 #1</span> ':'';
+    tilesHtml+=`<div class="store-tile" style="border-left-color:${col}">
+      <div class="st-name" title="${s.store}">${rkTag}${shortN}</div>
+      <div class="st-net">${fmtVND(s.net)}</div>
+      <div class="st-sub">Bán: ${fmtN(s.sold)} · TA: ${fmtFull(s.avg_ta)}</div>
+      <div class="st-bar"><div class="st-bar-fill" style="width:${w}%;background:${col}"></div></div>
+    </div>`;
+  });
+  tilesHtml+='</div>';
+  sbcEl.innerHTML+=`<div class="city-section">
+    <div class="city-section-header" style="background:${col}">${c.city}
+      <span style="font-weight:400;font-size:12px;opacity:0.85">${c.stores} cửa hàng · ${fmtVND(c.net)} · ${pct(c.net,totalNet)}</span>
+    </div>
+    ${tilesHtml}
+  </div>`;
+});
+
+// ══════════════════════════════════════════════════════════════════════════
+// TAB 3: DAILY TREND
+// ══════════════════════════════════════════════════════════════════════════
+let activeCities = new Set(cities.slice(0,6).map(c=>c.city));
+
+function buildCityTrendChart(){
+  const ctx=document.getElementById('chartCityTrend');
+  if(ctx._chart) ctx._chart.destroy();
+  const datasets=cities.filter(c=>activeCities.has(c.city)).map(c=>{
+    const col=CITY_COLORS[c.city]||'#888';
+    return{label:c.city,data:c.daily.map(d=>d.net),
+      borderColor:col,backgroundColor:hexAlpha(col,0.05),
+      borderWidth:2,tension:0.3,pointRadius:2.5,pointHoverRadius:6,fill:false};
+  });
+  ctx._chart=new Chart(ctx,{type:'line',data:{labels:dateLabels,datasets},
+    options:{responsive:true,interaction:{mode:'index',intersect:false},
+      plugins:{legend:{position:'bottom',labels:{font:{size:11},boxWidth:12,padding:10}},
+        tooltip:{callbacks:{label:ctx=>` ${ctx.dataset.label}: ${fmtVND(ctx.raw)}`}}},
+      scales:{
+        x:{ticks:{font:{size:10},maxRotation:45},grid:{color:'#eef3ee'}},
+        y:{ticks:{callback:v=>fmtVND(v),font:{size:11}},grid:{color:'#eef3ee'}}
+      }
+    }
+  });
+}
+
+const toggleEl=document.getElementById('city-toggles');
+cities.forEach(c=>{
+  const col=CITY_COLORS[c.city]||'#888';
+  const btn=document.createElement('button');
+  btn.className='city-toggle'+(activeCities.has(c.city)?' active':'');
+  btn.textContent=c.city;
+  if(activeCities.has(c.city)) btn.style.cssText=`background:${col};border-color:${col}`;
+  btn.onclick=()=>{
+    if(activeCities.has(c.city)){activeCities.delete(c.city);btn.classList.remove('active');btn.style.cssText='';}
+    else{activeCities.add(c.city);btn.classList.add('active');btn.style.cssText=`background:${col};border-color:${col}`;}
+    buildCityTrendChart();
+  };
+  toggleEl.appendChild(btn);
+});
+// Build after tab shown (deferred)
+setTimeout(buildCityTrendChart,100);
+
+// Weekday vs Weekend per city (top 6)
+const top6=cities.slice(0,6);
+const wkdAvg=top6.map(c=>{
+  const wkd=c.daily.filter(d=>!d.is_weekend);
+  return wkd.length?wkd.reduce((s,d)=>s+d.net,0)/wkd.length:0;
+});
+const wkeAvg=top6.map(c=>{
+  const wke=c.daily.filter(d=>d.is_weekend);
+  return wke.length?wke.reduce((s,d)=>s+d.net,0)/wke.length:0;
+});
+new Chart(document.getElementById('chartWkdWke'),{type:'bar',
+  data:{labels:top6.map(c=>c.city),datasets:[
+    {label:'Ngày thường (T2-T6)',data:wkdAvg,backgroundColor:top6.map(c=>hexAlpha(CITY_COLORS[c.city]||'#888',0.6)),borderRadius:5},
+    {label:'Cuối tuần (T7-CN)',data:wkeAvg,backgroundColor:top6.map(c=>CITY_COLORS[c.city]||'#888'),borderRadius:5},
+  ]},
+  options:{responsive:true,plugins:{legend:{position:'bottom'},
+    tooltip:{callbacks:{label:ctx=>` ${ctx.dataset.label}: ${fmtVND(ctx.raw)}/ngày`}}},
+    scales:{x:{ticks:{font:{size:11}}},y:{ticks:{callback:v=>fmtVND(v)},grid:{color:'#eef3ee'}}}
+  }
+});
+
+// Weekly breakdown: 4 weeks in March
+const weeks=[{label:'T1 (1-7)',start:0,end:7},{label:'T2 (8-14)',start:7,end:14},{label:'T3 (15-21)',start:14,end:21},{label:'T4 (22-31)',start:21,end:31}];
+const weeklyDatasets=top6.map(c=>({
+  label:c.city,
+  data:weeks.map(w=>c.daily.slice(w.start,w.end).reduce((s,d)=>s+d.net,0)),
+  backgroundColor:CITY_COLORS[c.city]||'#888',
+  borderRadius:4,
+}));
+new Chart(document.getElementById('chartWeekly'),{type:'bar',
+  data:{labels:weeks.map(w=>w.label),datasets:weeklyDatasets},
+  options:{responsive:true,plugins:{legend:{position:'bottom',labels:{font:{size:10},padding:8}}},
+    scales:{x:{stacked:true,ticks:{font:{size:11}}},y:{stacked:true,ticks:{callback:v=>fmtVND(v)},grid:{color:'#eef3ee'}}}
+  }
+});
+
+// ══════════════════════════════════════════════════════════════════════════
+// TAB 4: HEATMAP
+// ══════════════════════════════════════════════════════════════════════════
+// Top 15 stores by net, collect daily data
+const allStores=cities.flatMap(c=>c.store_list.map(s=>({...s,city:c.city,daily:c.daily})));
+// Actually need per-store daily — recompute from cities daily proportionally
+// Use city daily data for heatmap approximation per city
+// Build heatmap with city-level data (grouped)
+const hmTable=document.getElementById('heatmap-table');
+const top15cities=cities.slice(0,8);
+// Header
+let hmHtml='<thead><tr><th class="store-col">Tỉnh/TP</th>';
+GEO.dates.forEach(d=>{
+  const dt=new Date(d.split('/')[2],d.split('/')[1]-1,d.split('/')[0]);
+  const isWe=dt.getDay()===0||dt.getDay()===6;
+  hmHtml+=`<th style="${isWe?'background:#8e6b1a':''}">
+    ${d.slice(0,5)}<br><span style="font-weight:400;opacity:0.8;font-size:9px">
+    ${['CN','T2','T3','T4','T5','T6','T7'][dt.getDay()]}</span></th>`;
+});
+hmHtml+='</tr></thead><tbody>';
+
+const allDailyVals=top15cities.flatMap(c=>c.daily.map(d=>d.net));
+const maxVal=Math.max(...allDailyVals);
+const minVal=Math.min(...allDailyVals);
+
+function heatColor(v,col){
+  const ratio=(v-minVal)/(maxVal-minVal);
+  const r=parseInt(col.slice(1,3),16), g=parseInt(col.slice(3,5),16), b=parseInt(col.slice(5,7),16);
+  const alpha=0.1+ratio*0.85;
+  return `rgba(${r},${g},${b},${alpha})`;
+}
+top15cities.forEach(c=>{
+  const col=CITY_COLORS[c.city]||'#888';
+  hmHtml+=`<tr><td class="store-name"><span class="city-dot" style="background:${col}"></span>${c.city}</td>`;
+  c.daily.forEach(d=>{
+    const bg=heatColor(d.net,col.replace('#','').length===6?col:'#2d8f5e');
+    const textCol=d.net/maxVal>0.6?'#fff':'#1e2d1e';
+    hmHtml+=`<td style="background:${bg};color:${textCol};font-weight:${d.is_weekend?700:400}" title="${c.city} ${d.date}: ${fmtVND(d.net)}">
+      ${Math.round(d.net/1e6)}</td>`;
+  });
+  hmHtml+='</tr>';
+});
+hmHtml+='</tbody>';
+hmTable.innerHTML=hmHtml;
+
+// Store tiles
+const stEl=document.getElementById('store-tiles');
+cities.forEach(c=>{
+  const col=CITY_COLORS[c.city]||'#888';
+  const sorted=[...c.store_list].sort((a,b)=>b.net-a.net);
+  const maxN=sorted[0]?.net||1;
+  let th='<div class="store-grid">';
+  sorted.forEach((s,i)=>{
+    const shortN=s.store.replace(/^(BLP |TRÀ SỮA HOA SEN - |Trà Sữa Hoa Sen - |Trà Sữa Hoa Sen _ |Trà Sữa Hoa Sen _)/,'');
+    th+=`<div class="store-tile" style="border-left-color:${col}">
+      <div class="st-name">${shortN}</div>
+      <div class="st-net" style="color:${col}">${fmtVND(s.net)}</div>
+      <div class="st-sub">TC: ${fmtN(s.sold)} · TA: ${fmtFull(s.avg_ta)} · ADTC: ${s.adtc}</div>
+      <div class="st-bar"><div class="st-bar-fill" style="width:${Math.round(s.net/maxN*100)}%;background:${col}"></div></div>
+    </div>`;
+  });
+  th+='</div>';
+  stEl.innerHTML+=`<div class="city-section">
+    <div class="city-section-header" style="background:${col}">${c.city}
+      <span style="font-weight:400;font-size:12px;opacity:0.85;margin-left:8px">${c.stores} cửa hàng · ${fmtVND(c.net)}</span>
+    </div>${th}</div>`;
+});
+
+// ══════════════════════════════════════════════════════════════════════════
+// TAB 5: EFFICIENCY & RANKING
+// ══════════════════════════════════════════════════════════════════════════
+// Scatter: x=avg_ta, y=net, size=stores
+const scatterDatasets=regions.map(r=>{
+  const rCities=cities.filter(c=>c.region===r.region);
+  const col=REGION_COLORS[r.region]||'#888';
+  return{label:r.region,
+    data:rCities.map(c=>({x:c.avg_ta,y:c.net,label:c.city,stores:c.stores,net_per_store:c.net_per_store})),
+    backgroundColor:hexAlpha(col,0.7),borderColor:col,borderWidth:2,
+    pointRadius:rCities.map(c=>5+c.stores*2),pointHoverRadius:rCities.map(c=>7+c.stores*2),
+  };
+});
+new Chart(document.getElementById('chartScatter'),{type:'scatter',data:{datasets:scatterDatasets},
+  options:{responsive:true,
+    plugins:{legend:{position:'bottom'},
+      tooltip:{callbacks:{label:ctx=>{
+        const d=ctx.raw;
+        return[` ${d.label}`,` DT: ${fmtVND(d.y)}`,` Avg TA: ${fmtFull(d.x)}`,` ${d.stores} CH`];
+      }}}
+    },
+    scales:{
+      x:{title:{display:true,text:'Avg TA (₫/item)'},ticks:{callback:v=>fmtVND(v)},grid:{color:'#eef3ee'}},
+      y:{title:{display:true,text:'Doanh Thu Net'},ticks:{callback:v=>fmtVND(v)},grid:{color:'#eef3ee'}}
+    }
+  }
+});
+
+// Per-store revenue bar
+const psCities=[...cities].sort((a,b)=>b.net_per_store-a.net_per_store);
+new Chart(document.getElementById('chartPerStore'),{type:'bar',
+  data:{labels:psCities.map(c=>c.city),
+    datasets:[{label:'DT/Cửa Hàng',data:psCities.map(c=>c.net_per_store),
+      backgroundColor:psCities.map(c=>CITY_COLORS[c.city]||'#888'),borderRadius:6}]},
+  options:{indexAxis:'y',responsive:true,
+    plugins:{legend:{display:false},
+      tooltip:{callbacks:{label:ctx=>` ${fmtFull(ctx.raw)}/CH`}}},
+    scales:{x:{ticks:{callback:v=>fmtVND(v)},grid:{color:'#eef3ee'}}}
+  }
+});
+
+// Radar: multi-metric ranking (normalize each metric 0-100)
+const radarCities=cities.slice(0,7);
+function norm(arr){const mx=Math.max(...arr),mn=Math.min(...arr);return arr.map(v=>mx===mn?50:Math.round((v-mn)/(mx-mn)*100));}
+const normNet=norm(radarCities.map(c=>c.net));
+const normPerStore=norm(radarCities.map(c=>c.net_per_store));
+const normAdtc=norm(radarCities.map(c=>c.adtc));
+const normAvgTA=norm(radarCities.map(c=>c.avg_ta));
+const normWkeRatio=norm(radarCities.map(c=>{
+  const wke=c.daily.filter(d=>d.is_weekend).reduce((s,d)=>s+d.net,0);
+  const wkd=c.daily.filter(d=>!d.is_weekend).reduce((s,d)=>s+d.net,0);
+  return wkd?wke/wkd:0;
+}));
+
+new Chart(document.getElementById('chartRadar'),{type:'radar',
+  data:{labels:['Tổng Doanh Thu','DT/Cửa Hàng','ADTC','Avg TA','Sức mạnh Weekend'],
+    datasets:radarCities.map((c,i)=>({
+      label:c.city,
+      data:[normNet[i],normPerStore[i],normAdtc[i],normAvgTA[i],normWkeRatio[i]],
+      borderColor:CITY_COLORS[c.city]||'#888',
+      backgroundColor:hexAlpha(CITY_COLORS[c.city]||'#888',0.12),
+      borderWidth:2,pointRadius:4,
+    }))
+  },
+  options:{responsive:true,
+    plugins:{legend:{position:'bottom',labels:{font:{size:11},padding:10}}},
+    scales:{r:{min:0,max:100,ticks:{stepSize:25,font:{size:10}},
+      pointLabels:{font:{size:12}},grid:{color:'#d8e8d8'},angleLines:{color:'#d8e8d8'}}}
+  }
+});
+
+// Scatter legend
+const slEl=document.getElementById('scatter-legend');
+regions.forEach(r=>{
+  const col=REGION_COLORS[r.region]||'#888';
+  slEl.innerHTML+=`<div class="scatter-legend-item"><div class="scatter-legend-dot" style="background:${col}"></div>${r.region}</div>`;
+});
+</script>
+</body>
+</html>
